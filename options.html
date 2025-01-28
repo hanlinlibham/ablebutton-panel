@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AbleButton 设置</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --dark-blue: #1a237e;
+            --dark-red: #b71c1c;
+            --hover-blue: #283593;
+            --hover-red: #c62828;
+            --light-gray: #f8f9fa;
+            --border-color: #dee2e6;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--light-gray);
+        }
+
+        .header {
+            margin-bottom: 24px;
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--dark-blue);
+        }
+
+        .section {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            margin: 0 0 16px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark-blue);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section h2 i {
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--dark-blue);
+            box-shadow: 0 0 0 2px rgba(26,35,126,0.1);
+        }
+
+        .form-group .default-value {
+            position: absolute;
+            right: 8px;
+            top: 38px;
+            font-size: 12px;
+            color: #6c757d;
+            background: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            pointer-events: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .button i {
+            font-size: 14px;
+        }
+
+        .primary-button {
+            background-color: var(--dark-blue);
+            color: white;
+        }
+
+        .primary-button:hover {
+            background-color: var(--hover-blue);
+        }
+
+        .secondary-button {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .secondary-button:hover {
+            background-color: #545b62;
+        }
+
+        .critical-button {
+            background-color: var(--dark-red);
+            color: white;
+        }
+
+        .critical-button:hover {
+            background-color: var(--hover-red);
+        }
+
+        .status {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 4px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .status.success {
+            display: block;
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            display: block;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .stat-item {
+            background: var(--light-gray);
+            padding: 16px;
+            border-radius: 4px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--dark-blue);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* 添加标签样式 */
+        .service-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .tab-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background: var(--light-gray);
+            color: #666;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button:hover {
+            background: #e9ecef;
+        }
+
+        .tab-button.active {
+            background: var(--dark-blue);
+            color: white;
+        }
+
+        .service-settings {
+            display: none;
+        }
+
+        .service-settings.active {
+            display: block;
+        }
+
+        /* 添加模型选择相关样式 */
+        .model-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        .model-select:hover {
+            border-color: var(--dark-blue);
+        }
+
+        .model-select:focus {
+            outline: none;
+            border-color: var(--dark-blue);
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+        #customModelGroup {
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        #customModelGroup.hidden {
+            display: none;
+            opacity: 0;
+            height: 0;
+        }
+
+        #customModelGroup.visible {
+            display: block;
+            opacity: 1;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AbleButton 设置</h1>
+    </div>
+
+    <!-- API 设置 -->
+    <div class="section">
+        <h2><i class="fas fa-cog"></i>API 设置</h2>
+        <div class="service-tabs">
+            <button id="onlineServiceTab" class="tab-button active">
+                <i class="fas fa-cloud"></i>在线模型服务
+            </button>
+            <!-- 暂时隐藏本地和局域网服务
+            <button id="localServiceTab" class="tab-button">
+                <i class="fas fa-desktop"></i>本地模型服务
+            </button>
+            <button id="intranetServiceTab" class="tab-button">
+                <i class="fas fa-network-wired"></i>局域网模型服务
+            </button>
+            -->
+        </div>
+        
+        <!-- 在线服务设置 -->
+        <div id="onlineServiceSettings" class="service-settings active">
+            <div class="form-group">
+                <label for="apiEndpoint">API 地址</label>
+                <input type="text" id="apiEndpoint" placeholder="输入 API 地址">
+                <span class="default-value"></span>
+            </div>
+            <div class="form-group">
+                <label for="apiKey">API 密钥</label>
+                <input type="password" id="apiKey" placeholder="输入 API 密钥">
+            </div>
+            <div class="form-group">
+                <label for="modelSelect">选择模型</label>
+                <select id="modelSelect" class="model-select">
+                    <option value="deepseek-chat">DeepSeek Chat</option>
+                    <option value="deepseek-reasoner">DeepSeek Reasoner</option>
+                    <option value="custom">自定义模型</option>
+                </select>
+            </div>
+            <div class="form-group" id="customModelGroup" style="display: none;">
+                <label for="modelName">自定义模型名称</label>
+                <input type="text" id="modelName" placeholder="输入模型名称">
+            </div>
+            <div class="form-group">
+                <label for="temperature">温度 (0-1)</label>
+                <input type="number" id="temperature" min="0" max="1" step="0.1" placeholder="输入温度值">
+                <span class="default-value"></span>
+            </div>
+            <div class="form-group">
+                <label for="maxTokens">最大Token数</label>
+                <input type="number" id="maxTokens" min="1" placeholder="输入最大Token数">
+                <span class="default-value"></span>
+            </div>
+        </div>
+
+        <!-- 暂时隐藏本地服务设置
+        <div id="localServiceSettings" class="service-settings">
+            <div class="form-group">
+                <label for="localApiEndpoint">本地模型地址</label>
+                <input type="text" id="localApiEndpoint" placeholder="输入本地模型地址">
+                <span class="default-value"></span>
+            </div>
+            <div class="form-group">
+                <label for="localModelName">模型名称</label>
+                <input type="text" id="localModelName" placeholder="输入模型名称">
+                <span class="default-value"></span>
+            </div>
+        </div>
+        -->
+
+        <!-- 暂时隐藏局域网服务设置
+        <div id="intranetServiceSettings" class="service-settings">
+            <div class="form-group">
+                <label for="intranetApiEndpoint">API 地址</label>
+                <input type="text" id="intranetApiEndpoint" placeholder="输入局域网 API 地址">
+                <span class="default-value"></span>
+            </div>
+            <div class="form-group">
+                <label for="intranetApiKey">API 密钥</label>
+                <input type="password" id="intranetApiKey" placeholder="输入局域网 API 密钥">
+                <span class="default-value"></span>
+            </div>
+            <div class="form-group">
+                <label for="intranetModelName">模型名称</label>
+                <input type="text" id="intranetModelName" placeholder="输入模型名称">
+                <span class="default-value"></span>
+            </div>
+            <div class="form-group">
+                <label for="intranetTemperature">温度 (0-1)</label>
+                <input type="number" id="intranetTemperature" min="0" max="1" step="0.1" placeholder="输入温度值">
+                <span class="default-value"></span>
+            </div>
+            <div class="form-group">
+                <label for="intranetTopP">Top P (0-1)</label>
+                <input type="number" id="intranetTopP" min="0" max="1" step="0.1" placeholder="输入 Top P 值">
+                <span class="default-value"></span>
+            </div>
+            <div class="form-group">
+                <label for="intranetRepetitionPenalty">重复惩罚系数</label>
+                <input type="number" id="intranetRepetitionPenalty" min="1" step="0.01" placeholder="输入重复惩罚系数">
+                <span class="default-value"></span>
+            </div>
+            <div class="form-group">
+                <label for="intranetMaxTokens">最大Token数</label>
+                <input type="number" id="intranetMaxTokens" min="1" placeholder="输入最大Token数">
+                <span class="default-value"></span>
+            </div>
+        </div>
+        -->
+
+        <div id="apiStatus" class="status"></div>
+        <div class="button-group">
+            <button id="resetDefaults" class="button secondary-button">
+                <i class="fas fa-undo"></i>恢复默认
+            </button>
+            <button id="testApi" class="button secondary-button">
+                <i class="fas fa-vial"></i>测试连接
+            </button>
+            <button id="saveSettings" class="button primary-button">
+                <i class="fas fa-save"></i>保存设置
+            </button>
+        </div>
+    </div>
+
+    <!-- 使用统计 -->
+    <div class="section">
+        <h2><i class="fas fa-chart-bar"></i>使用统计</h2>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="uploadTokens">0</div>
+                <div class="stat-label">上传 Token 数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="downloadTokens">0</div>
+                <div class="stat-label">下载 Token 数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalChats">0</div>
+                <div class="stat-label">总对话次数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalTokens">0</div>
+                <div class="stat-label">总 Token 消耗</div>
+            </div>
+        </div>
+        <div class="button-group">
+            <button id="resetStats" class="button critical-button">
+                <i class="fas fa-trash"></i>重置统计
+            </button>
+        </div>
+    </div>
+
+    <script type="module" src="options.js"></script>
+    <script src="test/console_test.js"></script>
+</body>
+</html> 
