@@ -17,7 +17,7 @@ AbleButton 是一个智能的 Chrome 扩展，它可以帮助你分析网页内�
 - 对比google 的 Gemini AI 的两个模型 Gemini 2.0 Pro和Flash付费版本，对于页面的提问和总结效果，该程序在使用deepseek-chat v3 时已经能体现优势，且对中文支持更友好。
 - DeepSeek API费用低廉，通过api进行访问稳定性更高。
 
-![AbleButton](/Users/james/Documents/GitHub/ablebutton-deepseek/pic/01.png)
+![AbleButton](pic/01.png)
 
 ![Gemini](/Users/james/Documents/GitHub/ablebutton-deepseek/pic/03.png)
 
