@@ -19,11 +19,11 @@ AbleButton 是一个智能的 Chrome 扩展，它可以帮助你分析网页内�
 
 ![AbleButton](pic/01.png)
 
-![Gemini](/Users/james/Documents/GitHub/ablebutton-deepseek/pic/03.png)
+![Gemini](pic/03.png)
 
-<img src="/Users/james/Documents/GitHub/ablebutton-deepseek/pic/02.png" style="zoom: 25%;" />
+<img src="pic/02.png" style="zoom: 25%;" />
 
-<img src="/Users/james/Documents/GitHub/ablebutton-deepseek/pic/04.png" alt="04" style="zoom: 25%;" />
+<img src="pic/04.png" alt="04" style="zoom: 25%;" />
 
 ## 安装
 
