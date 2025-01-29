@@ -339,23 +339,22 @@ export async function sendAIRequest(messages, options = {}) {
         throw new Error('响应格式错误');
     }
 
-    // 计算并更新 token 统计
-    const inputText = messages.map(msg => msg.content).join('\n');
-    const outputText = data.choices[0].message.content;
-    const uploadTokens = estimateTokenCount(inputText);
-    const downloadTokens = estimateTokenCount(outputText);
+    // 使用 API 返回的实际 token 统计
+    if (data.usage) {
+        const stats = {
+            uploadTokens: data.usage.prompt_tokens || 0,
+            downloadTokens: data.usage.completion_tokens || 0,
+            totalTokens: data.usage.total_tokens || 0
+        };
 
-    console.log('Token 统计:', {
-        上传tokens: uploadTokens,
-        下载tokens: downloadTokens,
-        总计: uploadTokens + downloadTokens
-    });
+        console.log('Token 统计:', stats);
 
-    try {
-        const stats = await updateTokenStats(uploadTokens, downloadTokens);
-        console.log('统计数据已更新:', stats);
-    } catch (error) {
-        console.error('更新统计数据失败:', error);
+        try {
+            await updateTokenStats(stats.uploadTokens, stats.downloadTokens);
+            console.log('统计数据已更新:', stats);
+        } catch (error) {
+            console.error('更新统计数据失败:', error);
+        }
     }
 
     return data.choices[0].message.content;
@@ -375,6 +374,7 @@ export function estimateTokenCount(text) {
 // 更新 token 统计
 export async function updateTokenStats(uploadTokens, downloadTokens) {
     try {
+        // 获取当前统计数据
         const result = await chrome.storage.sync.get({
             tokenStats: {
                 uploadTokens: 0,
@@ -385,12 +385,20 @@ export async function updateTokenStats(uploadTokens, downloadTokens) {
         });
 
         const stats = result.tokenStats;
+        
+        // 更新统计数据
         stats.uploadTokens += uploadTokens;
         stats.downloadTokens += downloadTokens;
         stats.totalChats += 1;
         stats.totalTokens += (uploadTokens + downloadTokens);
 
+        // 保存更新后的统计数据
         await chrome.storage.sync.set({ tokenStats: stats });
+        
+        // 触发统计显示更新
+        const event = new CustomEvent('tokenStatsUpdated', { detail: stats });
+        window.dispatchEvent(event);
+
         return stats;
     } catch (error) {
         console.error('更新统计数据失败:', error);

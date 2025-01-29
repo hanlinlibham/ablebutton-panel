@@ -1,28 +1,25 @@
 import { DEFAULT_API_CONFIG } from './utils/api.js';
 
 // 显示默认值
-function showDefaultValues() {
-    // 在线服务默认值
-    const onlineDefaults = document.querySelectorAll('#onlineServiceSettings .default-value');
-    onlineDefaults[0].textContent = `默认: ${DEFAULT_API_CONFIG.online.apiEndpoint}`;
-    onlineDefaults[1].textContent = `默认: ${DEFAULT_API_CONFIG.online.modelSettings.modelName}`;
-    onlineDefaults[2].textContent = `默认: ${DEFAULT_API_CONFIG.online.modelSettings.temperature}`;
-    onlineDefaults[3].textContent = `默认: ${DEFAULT_API_CONFIG.online.modelSettings.maxTokens}`;
+async function showDefaultValues() {
+    try {
+        // 等待所有需要显示默认值的元素加载
+        const elements = {
+            defaultApiEndpoint: await waitForElement('defaultApiEndpoint'),
+            defaultTemperature: await waitForElement('defaultTemperature'),
+            defaultMaxTokens: await waitForElement('defaultMaxTokens')
+        };
 
-    // 本地服务默认值
-    const localDefaults = document.querySelectorAll('#localServiceSettings .default-value');
-    localDefaults[0].textContent = `默认: ${DEFAULT_API_CONFIG.local.apiEndpoint}`;
-    localDefaults[1].textContent = `默认: ${DEFAULT_API_CONFIG.local.modelName}`;
+        // 更新显示
+        elements.defaultApiEndpoint.textContent = DEFAULT_API_CONFIG.online.apiEndpoint;
+        elements.defaultTemperature.textContent = DEFAULT_API_CONFIG.online.modelSettings.temperature;
+        elements.defaultMaxTokens.textContent = DEFAULT_API_CONFIG.online.modelSettings.maxTokens;
 
-    // 局域网服务默认值
-    const intranetDefaults = document.querySelectorAll('#intranetServiceSettings .default-value');
-    intranetDefaults[0].textContent = `默认: ${DEFAULT_API_CONFIG.intranet.apiEndpoint}`;
-    intranetDefaults[1].textContent = `默认: ${DEFAULT_API_CONFIG.intranet.apiKey}`;
-    intranetDefaults[2].textContent = `默认: ${DEFAULT_API_CONFIG.intranet.modelSettings.modelName}`;
-    intranetDefaults[3].textContent = `默认: ${DEFAULT_API_CONFIG.intranet.modelSettings.temperature}`;
-    intranetDefaults[4].textContent = `默认: ${DEFAULT_API_CONFIG.intranet.modelSettings.topP}`;
-    intranetDefaults[5].textContent = `默认: ${DEFAULT_API_CONFIG.intranet.modelSettings.repetitionPenalty}`;
-    intranetDefaults[6].textContent = `默认: ${DEFAULT_API_CONFIG.intranet.modelSettings.maxTokens}`;
+        console.log('默认值显示更新完成');
+    } catch (error) {
+        console.warn('更新默认值显示失败:', error);
+        // 不抛出错误，让程序继续执行
+    }
 }
 
 // 切换服务类型
@@ -77,9 +74,9 @@ async function resetToDefaults() {
         document.getElementById('maxTokens').value = DEFAULT_API_CONFIG.online.modelSettings.maxTokens;
 
         await saveSettings();
-        showStatus('已恢复默认设置', true);
+        await showStatus('已恢复默认设置', true);
     } catch (error) {
-        showStatus('恢复默认设置失败: ' + error.message, false);
+        await showStatus('恢复默认设置失败: ' + error.message, false);
     }
 }
 
@@ -98,11 +95,169 @@ function handleModelSelectChange() {
     }
 }
 
-// 加载设置
+// 添加等待元素加载的辅助函数
+function waitForElement(elementId, timeout = 2000) {
+    return new Promise((resolve, reject) => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            resolve(element);
+            return;
+        }
+
+        const observer = new MutationObserver((mutations, obs) => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                obs.disconnect();
+                resolve(element);
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        // 设置超时
+        setTimeout(() => {
+            observer.disconnect();
+            reject(new Error(`等待元素 ${elementId} 超时`));
+        }, timeout);
+    });
+}
+
+// 修改 showStatus 函数
+async function showStatus(message, success = true) {
+    try {
+        const statusElement = await waitForElement('apiStatus');
+        statusElement.textContent = message;
+        statusElement.className = `status ${success ? 'success' : 'error'}`;
+        
+        if (message !== '正在测试连接...') {
+            setTimeout(() => {
+                if (statusElement) {
+                    statusElement.className = 'status';
+                }
+            }, 3000);
+        }
+    } catch (error) {
+        console.warn('显示状态消息失败:', error);
+    }
+}
+
+// 修改 updateStats 函数，添加更多的日志和错误处理
+async function updateStats(stats) {
+    if (!stats) {
+        console.warn('未提供统计数据');
+        return;
+    }
+
+    console.log('正在更新统计显示，原始数据:', stats);
+
+    try {
+        // 等待所有统计元素加载
+        const elements = {
+            uploadTokens: await waitForElement('uploadTokens'),
+            downloadTokens: await waitForElement('downloadTokens'),
+            totalChats: await waitForElement('totalChats'),
+            totalTokens: await waitForElement('totalTokens')
+        };
+
+        console.log('所有统计元素已加载:', Object.keys(elements));
+
+        // 更新显示前检查数据
+        const displayData = {
+            uploadTokens: parseInt(stats.uploadTokens || 0),
+            downloadTokens: parseInt(stats.downloadTokens || 0),
+            totalChats: parseInt(stats.totalChats || 0),
+            totalTokens: parseInt(stats.totalTokens || 0)
+        };
+
+        console.log('准备显示的数据:', displayData);
+
+        // 更新显示
+        elements.uploadTokens.textContent = displayData.uploadTokens.toLocaleString();
+        elements.downloadTokens.textContent = displayData.downloadTokens.toLocaleString();
+        elements.totalChats.textContent = displayData.totalChats.toLocaleString();
+        elements.totalTokens.textContent = displayData.totalTokens.toLocaleString();
+
+        console.log('统计显示更新完成');
+    } catch (error) {
+        console.error('更新统计显示失败:', error);
+    }
+}
+
+// 修改 loadSettings 函数，将统计数据加载分离出来
 async function loadSettings() {
     try {
-        const result = await chrome.storage.sync.get({
-            ...DEFAULT_API_CONFIG,
+        console.log('开始加载设置...');
+        
+        // 获取设置数据
+        const settingsResult = await chrome.storage.sync.get({
+            serviceType: DEFAULT_API_CONFIG.serviceType,
+            online: DEFAULT_API_CONFIG.online
+        });
+
+        console.log('加载的设置:', settingsResult);
+
+        // 等待并获取所有必要的元素
+        const elements = {
+            apiEndpoint: await waitForElement('apiEndpoint'),
+            apiKey: await waitForElement('apiKey'),
+            modelSelect: await waitForElement('modelSelect'),
+            temperature: await waitForElement('temperature'),
+            maxTokens: await waitForElement('maxTokens')
+        };
+
+        // 填充表单数据
+        if (settingsResult.online) {
+            elements.apiEndpoint.value = settingsResult.online.apiEndpoint || DEFAULT_API_CONFIG.online.apiEndpoint;
+            elements.apiKey.value = settingsResult.online.apiKey || '';
+        }
+
+        // 设置模型选择
+        const customModelGroup = document.getElementById('customModelGroup');
+        const modelNameInput = document.getElementById('modelName');
+        
+        if (customModelGroup && settingsResult.online?.modelSettings) {
+            const modelName = settingsResult.online.modelSettings.modelName || DEFAULT_API_CONFIG.online.modelSettings.modelName;
+            
+            if (DEFAULT_API_CONFIG.online.modelSettings.availableModels.includes(modelName)) {
+                elements.modelSelect.value = modelName;
+                customModelGroup.style.display = 'none';
+            } else {
+                elements.modelSelect.value = 'custom';
+                if (modelNameInput) {
+                    modelNameInput.value = modelName;
+                }
+                customModelGroup.style.display = 'block';
+            }
+        }
+
+        // 设置其他参数
+        if (settingsResult.online?.modelSettings) {
+            elements.temperature.value = settingsResult.online.modelSettings.temperature || DEFAULT_API_CONFIG.online.modelSettings.temperature;
+            elements.maxTokens.value = settingsResult.online.modelSettings.maxTokens || DEFAULT_API_CONFIG.online.modelSettings.maxTokens;
+        }
+
+        // 尝试显示默认值，但不让它阻止其他设置的加载
+        try {
+            await showDefaultValues();
+        } catch (error) {
+            console.warn('显示默认值失败:', error);
+        }
+
+        return settingsResult;
+    } catch (error) {
+        console.error('加载设置失败:', error);
+        // 不在这里显示错误状态，让调用者处理
+        throw error;
+    }
+}
+
+// 添加初始化统计数据的函数
+async function initializeStats() {
+    try {
+        const statsResult = await chrome.storage.sync.get({
             tokenStats: {
                 uploadTokens: 0,
                 downloadTokens: 0,
@@ -111,36 +266,12 @@ async function loadSettings() {
             }
         });
 
-        // 填充在线服务表单
-        document.getElementById('apiEndpoint').value = result.online.apiEndpoint;
-        document.getElementById('apiKey').value = result.online.apiKey;
-        
-        // 设置模型选择
-        const modelSelect = document.getElementById('modelSelect');
-        const modelName = result.online.modelSettings.modelName;
-        const customModelGroup = document.getElementById('customModelGroup');
-        
-        if (DEFAULT_API_CONFIG.online.modelSettings.availableModels.includes(modelName)) {
-            modelSelect.value = modelName;
-            customModelGroup.style.display = 'none';
-        } else {
-            modelSelect.value = 'custom';
-            document.getElementById('modelName').value = modelName;
-            customModelGroup.style.display = 'block';
-        }
-        
-        document.getElementById('temperature').value = result.online.modelSettings.temperature;
-        document.getElementById('maxTokens').value = result.online.modelSettings.maxTokens;
-
-        // 显示默认值
-        showDefaultValues();
-
-        // 更新统计数据
-        updateStats(result.tokenStats);
-
-        return result;
+        console.log('初始化统计数据:', statsResult.tokenStats);
+        await updateStats(statsResult.tokenStats);
+        return statsResult.tokenStats;
     } catch (error) {
-        showStatus('加载设置失败: ' + error.message, false);
+        console.error('初始化统计数据失败:', error);
+        throw error;
     }
 }
 
@@ -153,7 +284,7 @@ async function saveSettings() {
             : modelSelect.value;
 
         if (!modelName) {
-            showStatus('请选择或输入模型名称', false);
+            await showStatus('请选择或输入模型名称', false);
             return;
         }
 
@@ -175,37 +306,37 @@ async function saveSettings() {
 
         // 验证设置
         if (!config.online.apiEndpoint) {
-            showStatus('请填写 API 地址', false);
+            await showStatus('请填写 API 地址', false);
             return;
         }
 
         await chrome.storage.sync.set(config);
         console.log('设置已保存:', config); // 添加日志
-        showStatus('设置已保存', true);
+        await showStatus('设置已保存', true);
     } catch (error) {
         console.error('保存设置失败:', error);
-        showStatus('保存设置失败: ' + error.message, false);
+        await showStatus('保存设置失败: ' + error.message, false);
     }
 }
 
 // 测试 API 连接
 async function testApiConnection() {
     try {
-        showStatus('正在保存配置...', true);
+        await showStatus('正在保存配置...', true);
         // 先保存当前设置
         await saveSettings();
         
-        showStatus('正在测试连接...', true);
+        await showStatus('正在测试连接...', true);
         // 导入 API 函数
         const { checkApiStatus } = await import('./utils/api.js');
         
         // 测试连接
         const success = await checkApiStatus();
         if (success) {
-            showStatus('API 连接测试成功', true);
+            await showStatus('API 连接测试成功', true);
         }
     } catch (error) {
-        showStatus('API 连接测试失败: ' + error.message, false);
+        await showStatus('API 连接测试失败: ' + error.message, false);
     }
 }
 
@@ -224,32 +355,10 @@ async function resetStats() {
         };
 
         await chrome.storage.sync.set({ tokenStats: defaultStats });
-        updateStats(defaultStats);
-        showStatus('统计数据已重置', true);
+        await updateStats(defaultStats);
+        await showStatus('统计数据已重置', true);
     } catch (error) {
-        showStatus('重置统计失败: ' + error.message, false);
-    }
-}
-
-// 更新统计显示
-function updateStats(stats) {
-    document.getElementById('uploadTokens').textContent = stats.uploadTokens.toLocaleString();
-    document.getElementById('downloadTokens').textContent = stats.downloadTokens.toLocaleString();
-    document.getElementById('totalChats').textContent = stats.totalChats.toLocaleString();
-    document.getElementById('totalTokens').textContent = stats.totalTokens.toLocaleString();
-}
-
-// 显示状态消息
-function showStatus(message, success = true) {
-    const statusElement = document.getElementById('apiStatus');
-    statusElement.textContent = message;
-    statusElement.className = `status ${success ? 'success' : 'error'}`;
-    
-    // 如果消息不是"正在测试连接..."，则设置自动隐藏
-    if (message !== '正在测试连接...') {
-        setTimeout(() => {
-            statusElement.className = 'status';
-        }, 3000);
+        await showStatus('重置统计失败: ' + error.message, false);
     }
 }
 
@@ -264,63 +373,121 @@ function setupInputListeners() {
     });
 }
 
-// 设置按钮事件监听
-document.addEventListener('DOMContentLoaded', async () => {
+// 添加定期刷新统计数据的功能
+async function refreshStats() {
     try {
-        // 加载设置
-        await loadSettings();
+        const result = await chrome.storage.sync.get('tokenStats');
+        if (result.tokenStats) {
+            console.log('刷新统计数据:', result.tokenStats);
+            await updateStats(result.tokenStats);
+        }
+    } catch (error) {
+        console.error('刷新统计数据失败:', error);
+    }
+}
+
+// 修改初始化代码
+document.addEventListener('DOMContentLoaded', async () => {
+    let statusElement = null;
+    
+    try {
+        console.log('页面加载完成，开始初始化...');
         
-        // 获取所有需要的元素
+        // 首先等待状态元素加载
+        try {
+            statusElement = await waitForElement('apiStatus');
+        } catch (statusError) {
+            console.warn('状态元素未就绪，继续初始化其他部分');
+        }
+        
+        // 加载设置和初始化统计数据
+        const initPromises = [loadSettings()];
+        
+        // 如果统计相关元素存在，则初始化统计数据
+        const statsElements = document.querySelectorAll('#uploadTokens, #downloadTokens, #totalChats, #totalTokens');
+        if (statsElements.length === 4) {
+            initPromises.push(initializeStats());
+        }
+        
+        await Promise.all(initPromises);
+        
+        // 设置事件监听器
         const elements = {
             modelSelect: document.getElementById('modelSelect'),
             saveSettings: document.getElementById('saveSettings'),
             resetDefaults: document.getElementById('resetDefaults'),
             testApi: document.getElementById('testApi'),
-            resetStats: document.getElementById('resetStats'),
-            onlineServiceTab: document.getElementById('onlineServiceTab'),
-            localServiceTab: document.getElementById('localServiceTab'),
-            intranetServiceTab: document.getElementById('intranetServiceTab')
+            resetStats: document.getElementById('resetStats')
         };
 
-        // 检查必需的元素是否存在
-        if (elements.modelSelect) {
-            elements.modelSelect.addEventListener('change', handleModelSelectChange);
+        // 检查必要的设置元素是否存在
+        const requiredElements = ['modelSelect', 'saveSettings', 'resetDefaults', 'testApi'];
+        const missingElements = requiredElements
+            .filter(key => !elements[key])
+            .map(key => key);
+
+        if (missingElements.length > 0) {
+            throw new Error(`缺少必要元素: ${missingElements.join(', ')}`);
         }
 
-        if (elements.saveSettings) {
-            elements.saveSettings.addEventListener('click', saveSettings);
-        }
-
-        if (elements.resetDefaults) {
-            elements.resetDefaults.addEventListener('click', resetToDefaults);
-        }
-
-        if (elements.testApi) {
-            elements.testApi.addEventListener('click', testApiConnection);
-        }
-
+        // 设置事件监听器
+        elements.modelSelect.addEventListener('change', handleModelSelectChange);
+        elements.saveSettings.addEventListener('click', saveSettings);
+        elements.resetDefaults.addEventListener('click', resetToDefaults);
+        elements.testApi.addEventListener('click', testApiConnection);
+        
+        // 如果重置统计按钮存在，添加事件监听器
         if (elements.resetStats) {
             elements.resetStats.addEventListener('click', resetStats);
         }
 
-        // 设置服务类型切换事件
-        if (elements.onlineServiceTab) {
-            elements.onlineServiceTab.addEventListener('click', () => switchServiceType('online'));
+        // 设置统计更新监听器
+        window.addEventListener('tokenStatsUpdated', async (event) => {
+            console.log('收到统计更新事件:', event.detail);
+            if (event.detail) {
+                await updateStats(event.detail);
+            }
+        });
+
+        // 监听存储变化
+        chrome.storage.onChanged.addListener((changes, namespace) => {
+            if (namespace === 'sync' && changes.tokenStats) {
+                console.log('检测到统计数据变化:', changes.tokenStats.newValue);
+                updateStats(changes.tokenStats.newValue);
+            }
+        });
+
+        // 设置定期刷新（延迟启动定时器）
+        setTimeout(() => {
+            setInterval(refreshStats, 5000);
+            console.log('已启动定期刷新');
+        }, 5000);
+
+        // 清除任何错误状态
+        if (statusElement) {
+            statusElement.textContent = '';
+            statusElement.className = 'status';
         }
 
-        if (elements.localServiceTab) {
-            elements.localServiceTab.addEventListener('click', () => switchServiceType('local'));
-        }
-
-        if (elements.intranetServiceTab) {
-            elements.intranetServiceTab.addEventListener('click', () => switchServiceType('intranet'));
-        }
-
-        // 设置输入监听
-        setupInputListeners();
-        
-        console.log('所有事件监听器已设置完成');
+        console.log('初始化完成');
     } catch (error) {
         console.error('初始化设置页面失败:', error);
+        
+        // 如果状态元素已经获取到，直接使用
+        if (statusElement) {
+            statusElement.textContent = '初始化失败: ' + error.message;
+            statusElement.className = 'status error';
+        } else {
+            // 如果状态元素还没有获取到，尝试再次获取
+            try {
+                statusElement = await waitForElement('apiStatus', 1000); // 较短的超时时间
+                if (statusElement) {
+                    statusElement.textContent = '初始化失败: ' + error.message;
+                    statusElement.className = 'status error';
+                }
+            } catch (statusError) {
+                console.error('无法显示错误状态:', statusError);
+            }
+        }
     }
 }); 

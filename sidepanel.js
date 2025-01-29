@@ -115,12 +115,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // 设置事件监听器
 function setupEventListeners() {
-        const sendButton = document.getElementById('sendButton');
-        const messageInput = document.getElementById('messageInput');
-        const searchToggle = document.getElementById('searchToggle');
-        const downloadButton = document.getElementById('downloadButton');
-        
-        if (sendButton) {
+    const sendButton = document.getElementById('sendButton');
+    const messageInput = document.getElementById('messageInput');
+    const searchToggle = document.getElementById('searchToggle');
+    const downloadButton = document.getElementById('downloadButton');
+    const selectAreaButton = document.getElementById('selectAreaButton');
+    const settingsButton = document.getElementById('settingsButton');
+    
+    // 设置按钮点击事件
+    if (settingsButton) {
+        settingsButton.addEventListener('click', () => {
+            chrome.runtime.openOptionsPage();
+        });
+    }
+
+    // 框选区域按钮点击事件
+    if (selectAreaButton) {
+        selectAreaButton.addEventListener('click', async () => {
+            if (isProcessing) return;
+            isProcessing = true;
+            try {
+                await activateSelectionTool(messageHistory, MAX_MESSAGE_HISTORY);
+            } catch (error) {
+                console.error('激活选择工具失败:', error);
+                await handleError(error, '激活选择工具失败', messageHistory, MAX_MESSAGE_HISTORY);
+            } finally {
+                isProcessing = false;
+            }
+        });
+    }
+
+    if (sendButton) {
         sendButton.addEventListener('click', async () => {
             if (isProcessing) return;
             
@@ -128,6 +153,21 @@ function setupEventListeners() {
             try {
                 const message = messageInput.value.trim();
                 const chatMessages = document.getElementById('chatMessages');
+                
+                // 检查 API 密钥
+                const { online } = await chrome.storage.sync.get(['online']);
+                if (!online?.apiKey) {
+                    // 如果没有 API 密钥，显示提示消息
+                    await addMessage(
+                        "⚠️ 请先配置 API 密钥。点击右下角的 ⚙️ 设置按钮，在设置页面输入你的 API 密钥。",
+                        false,
+                        false,
+                        chatMessages,
+                        messageHistory,
+                        MAX_MESSAGE_HISTORY
+                    );
+                    return;
+                }
                 
                 await sendMessage(
                     message,
@@ -146,74 +186,74 @@ function setupEventListeners() {
                 isProcessing = false;
             }
         });
-        }
-        
-        if (messageInput) {
+    }
+    
+    if (messageInput) {
         messageInput.addEventListener('input', () => adjustTextareaHeight(messageInput));
         messageInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
                 sendButton?.click();
-                }
-            });
-            messageInput.placeholder = '输入消息...';
-        }
+            }
+        });
+        messageInput.placeholder = '输入消息...';
+    }
 
-        if (searchToggle) {
-            searchToggle.addEventListener('click', () => {
-                isSearchMode = !isSearchMode;
+    if (searchToggle) {
+        searchToggle.addEventListener('click', () => {
+            isSearchMode = !isSearchMode;
             toggleSearchMode(searchToggle, isSearchMode);
         });
     }
 
-        if (downloadButton) {
-            downloadButton.addEventListener('click', async () => {
+    if (downloadButton) {
+        downloadButton.addEventListener('click', async () => {
             if (isProcessing) return;
-                
-                isProcessing = true;
-                try {
+            
+            isProcessing = true;
+            try {
                 const chatMessages = document.getElementById('chatMessages');
                 const progressMessage = await addMessage('正在分析下载内容...', false, false, chatMessages);
+                
+                // 分析页面结构
+                const structure = await analyzeWebStructure(selectedArea);
+                const matches = matchPagePattern(structure);
+                
+                let result = '';
+                if (matches.length > 0) {
+                    const bestMatch = matches[0];
+                    console.log('最佳匹配模式:', bestMatch.pattern.name);
                     
-                    // 分析页面结构
-                    const structure = await analyzeWebStructure(selectedArea);
-                    const matches = matchPagePattern(structure);
-                    
-                    let result = '';
-                    if (matches.length > 0) {
-                        const bestMatch = matches[0];
-                        console.log('最佳匹配模式:', bestMatch.pattern.name);
-                        
-                        switch (bestMatch.pattern.downloadMethod) {
-                            case 'downloadFilesFromAllPages':
-                                result = await downloadFilesFromAllPages(progressMessage);
-                                break;
-                            case 'downloadFilesFromAllDetails':
-                                result = await downloadFilesFromAllDetails(progressMessage);
-                                break;
-                            default:
-                                result = await findAndDownloadFiles(progressMessage);
-                                break;
-                        }
-                    } else {
-                        result = await findAndDownloadFiles(progressMessage);
+                    switch (bestMatch.pattern.downloadMethod) {
+                        case 'downloadFilesFromAllPages':
+                            result = await downloadFilesFromAllPages(progressMessage);
+                            break;
+                        case 'downloadFilesFromAllDetails':
+                            result = await downloadFilesFromAllDetails(progressMessage);
+                            break;
+                        default:
+                            result = await findAndDownloadFiles(progressMessage);
+                            break;
                     }
-                    
-                    // 更新进度消息
-                    if (progressMessage) {
-                        const markdownContainer = progressMessage.querySelector('.markdown-body');
-                        if (markdownContainer) {
-                        markdownContainer.innerHTML = result;
-                        }
-                    }
-                } catch (error) {
-                    console.error('下载操作失败:', error);
-                await handleError(error, '下载失败', messageHistory, MAX_MESSAGE_HISTORY);
-                } finally {
-                    isProcessing = false;
+                } else {
+                    result = await findAndDownloadFiles(progressMessage);
                 }
-            });
-        }
+                
+                // 更新进度消息
+                if (progressMessage) {
+                    const markdownContainer = progressMessage.querySelector('.markdown-body');
+                    if (markdownContainer) {
+                        markdownContainer.innerHTML = result;
+                    }
+                }
+            } catch (error) {
+                console.error('下载操作失败:', error);
+                await handleError(error, '下载失败', messageHistory, MAX_MESSAGE_HISTORY);
+            } finally {
+                isProcessing = false;
+            }
+        });
+    }
 }
 
 // 清理消息历史

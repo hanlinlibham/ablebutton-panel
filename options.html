@@ -320,33 +320,33 @@
             <div class="form-group">
                 <label for="apiEndpoint">API 地址</label>
                 <input type="text" id="apiEndpoint" placeholder="输入 API 地址">
-                <span class="default-value"></span>
+                <span class="default-value" id="defaultApiEndpoint"></span>
             </div>
             <div class="form-group">
-                <label for="apiKey">API 密钥</label>
-                <input type="password" id="apiKey" placeholder="输入 API 密钥">
+                <label for="apiKey">API Key</label>
+                <input type="password" id="apiKey" placeholder="输入 API Key">
             </div>
             <div class="form-group">
-                <label for="modelSelect">选择模型</label>
-                <select id="modelSelect" class="model-select">
+                <label for="modelSelect">模型</label>
+                <select id="modelSelect">
                     <option value="deepseek-chat">DeepSeek Chat</option>
                     <option value="deepseek-reasoner">DeepSeek Reasoner</option>
-                    <option value="custom">自定义模型</option>
+                    <option value="custom">自定义</option>
                 </select>
             </div>
-            <div class="form-group" id="customModelGroup" style="display: none;">
+            <div id="customModelGroup" class="form-group" style="display: none;">
                 <label for="modelName">自定义模型名称</label>
                 <input type="text" id="modelName" placeholder="输入模型名称">
             </div>
             <div class="form-group">
-                <label for="temperature">温度 (0-1)</label>
-                <input type="number" id="temperature" min="0" max="1" step="0.1" placeholder="输入温度值">
-                <span class="default-value"></span>
+                <label for="temperature">温度</label>
+                <input type="number" id="temperature" min="0" max="1" step="0.1">
+                <span class="default-value" id="defaultTemperature"></span>
             </div>
             <div class="form-group">
-                <label for="maxTokens">最大Token数</label>
-                <input type="number" id="maxTokens" min="1" placeholder="输入最大Token数">
-                <span class="default-value"></span>
+                <label for="maxTokens">最大 Token</label>
+                <input type="number" id="maxTokens" min="1" max="4096">
+                <span class="default-value" id="defaultMaxTokens"></span>
             </div>
         </div>
 
