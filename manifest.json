@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AbleButton",
-  "version": "1.0.0",
+  "version": "1.0",
   "description": "一个智能的 AI 助手，可以帮助你分析网页内容、执行搜索和处理文件。",
   "permissions": [
     "storage",
